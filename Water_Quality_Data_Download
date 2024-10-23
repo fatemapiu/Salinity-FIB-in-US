@@ -1,0 +1,61 @@
+import requests
+import json
+import os
+
+# The folder path to save the downloaded files
+folder_path = r"C:\Users\fatem\OneDrive - Virginia Tech\Desktop\Salinization_files\physical_data"
+
+# The URL
+url = "https://www.waterqualitydata.us/data/Result/search?mimeType=csv&zip=yes"
+
+# Site names
+site_names = ["Stream"]  # Add more if needed
+
+# US state codes
+us_state_codes = ["US:41"]
+
+# Loop through state codes
+for state_code in us_state_codes:
+    # Loop through site names
+    for site_name in site_names:
+        # The payload data for each combination
+        payload = {
+            "countrycode": ["US"],
+            "statecode": [state_code],
+            "siteType": [site_name],
+            "characteristicType": ["Inorganics, Major, Metals", "Microbiological", "Nutrient", "Physical",
+                                   "Inorganics, Major, Non-metals", "Inorganics, Minor, Metals",
+                                   "Inorganics, Minor, Non-metals"],
+            "characteristicName": ["Potassium", "Phosphorus", "Magnesium", "Sodium", "Specific conductivity",
+                                   "Escherichia coli", "Fecal Coliform", "Nitrogen", "Calcium", "Salinity",
+                                   "Specific conductance", "Chloride", "Sulfate", "Carbonate", "Bicarbonate",
+                                   "Dissolved oxygen", "Dissolved oxygen saturation", "pH",
+                                   "Temperature, water"],
+            "startDateLo": "01-01-1980",
+            "startDateHi": "12-01-2023",
+            "dataProfile": "resultPhysChem",
+            "providers": ["NWIS", "STEWARDS", "STORET"]
+        }
+
+        # Payload to JSON
+        json_payload = json.dumps(payload)
+
+        # Headers
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/zip'
+        }
+
+        # The POST request
+        response = requests.post(url, data=json_payload, headers=headers)
+
+        if response.status_code == 200:
+            # Saving the response content to a file 
+            file_name = f"salinity_{site_name}_{state_code.replace(':', '_')}.zip"
+            file_path = os.path.join(folder_path, file_name)
+            with open(file_path, 'wb') as file:
+                file.write(response.content)
+            print(f"Data for {site_name} in {state_code} downloaded successfully and saved to {file_path}.")
+        else:
+            print(f"Failed to download data for {site_name} in {state_code}. Status code: {response.status_code}")
+            print(response.text)
